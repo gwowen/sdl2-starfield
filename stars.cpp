@@ -42,7 +42,7 @@ void doStars() {
   }
 }
 
-void drawStars() {
+void updateStars() {
   SDL_Rect rect;
 
   for( int i = 0; i < NUM_STARS; ++i ) {
@@ -89,9 +89,25 @@ int getStarColor( int speed ) {
 
 }
 
+void delay( unsigned int frameLimit ) {
+  unsigned int ticks = SDL_GetTicks();
+
+  if( frameLimit < ticks ) {
+    return;
+  }
+
+  if( frameLimit > ticks + 16 ) {
+    SDL_Delay( 16 );
+  }
+  else {
+    SDL_Delay( frameLimit - ticks );
+  }
+}
+
 int main( int argc, char* argv[] ) {
 
   SDL_Event event;
+  unsigned int Limit = SDL_GetTicks() + 16;
 
   SDL_Init( SDL_INIT_EVERYTHING );
 
@@ -107,7 +123,7 @@ int main( int argc, char* argv[] ) {
     return 1;
   }
 
-  myRenderer = SDL_CreateRenderer( myWindow, -1, SDL_RENDERER_ACCELERATED );
+  myRenderer = SDL_CreateRenderer( myWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
 
   if( myRenderer == NULL ) {
     printf( "Could not create renderer: %s\n", SDL_GetError() );
@@ -130,6 +146,8 @@ int main( int argc, char* argv[] ) {
 
   bool running = true;
 
+  resetStars();
+
   while( running ) {
 
     if( SDL_PollEvent( &event ) ) {
@@ -146,16 +164,21 @@ int main( int argc, char* argv[] ) {
     }
 
 
-    SDL_SetRenderDrawColor( myRenderer, 0, 0, 0, 255 );
-    SDL_RenderClear( myRenderer );
+    doStars();
+    SDL_FillRect( mySurface, NULL, 0 );
+    updateStars();
     SDL_UpdateTexture( myTexture, NULL, mySurface->pixels, mySurface->pitch );
     SDL_RenderCopy( myRenderer, myTexture, NULL, NULL );
     SDL_RenderPresent( myRenderer );
+    SDL_Delay( 1 );
+    delay( Limit );
+    Limit = SDL_GetTicks() + 16;
 }
 
   SDL_DestroyWindow( myWindow );
   SDL_DestroyRenderer( myRenderer );
-  printf( "Quit\n" );
+  myWindow = NULL;
+  myRenderer = NULL;
   SDL_Quit();
   return 0;
 
